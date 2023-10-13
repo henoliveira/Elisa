@@ -4,6 +4,7 @@ import colors
 import OpenGL.GL as gl
 import OpenGL.GLU as glu
 import OpenGL.GLUT as glut
+from generate import scene_coordinates
 
 
 class Cube:
@@ -22,16 +23,10 @@ class Scene:
         self.rotate_x = 0.0
         self.translation_x = 0.0
         self.translation_y = 0.0
-        self.scale = 1.0
-
+        self.scale = 0.2
         self.cubes = [
-            Cube(0, 0, 0, colors.RED),
-            Cube(-2, -1, 0, colors.LAVENDER),
-            Cube(-3, -2, 0, colors.PEACH),
-            Cube(-1, -2, 0, colors.PINK),
-            Cube(2, -1, 0, colors.GREEN),
-            Cube(3, -2, 0, colors.SAPPHIRE),
-            Cube(1, -2, 0, colors.MAROON),
+            Cube(*coordinates, color=colors.randomly())
+            for coordinates in scene_coordinates
         ]
 
         glut.glutInit(sys.argv)
