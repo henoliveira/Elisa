@@ -1,3 +1,4 @@
+import random
 import sys
 
 import colors
@@ -7,14 +8,21 @@ import OpenGL.GLUT as glut
 from generate import scene_coordinates
 
 
-class Cube:
-    def __init__(self, x: int, y: int, z: int, color):
-        self.rotate_y = 0.0
-        self.rotate_x = 0.0
-        self.scale = 1.0
+class Polygons:
+    def __init__(self, x: int, y: int, z: int, color:int, form: int):
         self.position = (x, y, z)
         self.color = color
         gl.glShadeModel(gl.GL_FLAT)
+
+    def display(self):
+        gl.glPushMatrix()
+        gl.glTranslatef(*self.position)
+        gl.glColor3f(*self.color)
+        # glut.glutSolidCube(1.0)
+        # glut.glutSolidSphere(0.5, 20, 20)
+        # glut.glutSolidTeapot(0.5)
+        glut.glutSolidTetrahedron()
+        gl.glPopMatrix()
 
 
 class Scene:
@@ -24,10 +32,16 @@ class Scene:
         self.translation_x = 0.0
         self.translation_y = 0.0
         self.scale = 0.2
-        self.cubes = [
-            Cube(*coordinates, color=colors.randomly())
-            for coordinates in scene_coordinates
-        ]
+        self.combinations = random.sample(range(10, 50), 31)
+        # self.cubes = [
+        #     Polygons(
+        #         *coordinates,
+        #         color=colors.randomly(),
+        #         combination=combination,
+        #     )
+        #     for coordinates in scene_coordinates
+        #     for combination in self.combinations
+        # ]
 
         glut.glutInit(sys.argv)
         glut.glutInitDisplayMode(glut.GLUT_SINGLE | glut.GLUT_RGB)  # type: ignore
@@ -40,6 +54,10 @@ class Scene:
         glut.glutKeyboardFunc(self.keyboard)
         glut.glutMainLoop()
 
+    def generate_polygons(self):
+        for 
+
+
     def display(self):
         gl.glClearColor(*colors.BASE, 1.0)
         gl.glClear(gl.GL_COLOR_BUFFER_BIT)
@@ -51,11 +69,7 @@ class Scene:
         gl.glTranslatef(self.translation_x, self.translation_y, 0.0)
 
         for cube in self.cubes:
-            gl.glPushMatrix()
-            gl.glTranslatef(*cube.position)
-            gl.glColor3f(*cube.color)
-            glut.glutSolidCube(1.0)
-            gl.glPopMatrix()
+            cube.display()
 
         gl.glFlush()
 
