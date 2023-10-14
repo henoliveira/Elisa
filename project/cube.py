@@ -1,27 +1,39 @@
 import random
 import sys
 
-import colors
 import OpenGL.GL as gl
 import OpenGL.GLU as glu
 import OpenGL.GLUT as glut
-from generate import scene_coordinates
+from utils import BASE_COLOR, COLORS, COLORS_LIST, SCENE_COORDINATES
 
 
 class Polygons:
-    def __init__(self, x: int, y: int, z: int, color:int, form: int):
+    def __init__(
+        self,
+        x: int,
+        y: int,
+        z: int,
+        color_id: int,
+        form: int,
+    ):
         self.position = (x, y, z)
-        self.color = color
+        self.color_id = color_id
+        self.form = form
         gl.glShadeModel(gl.GL_FLAT)
 
     def display(self):
         gl.glPushMatrix()
         gl.glTranslatef(*self.position)
-        gl.glColor3f(*self.color)
-        # glut.glutSolidCube(1.0)
-        # glut.glutSolidSphere(0.5, 20, 20)
-        # glut.glutSolidTeapot(0.5)
-        glut.glutSolidTetrahedron()
+        gl.glColor3f(*COLORS_LIST[self.color_id])
+        match self.form:
+            case 1:
+                glut.glutSolidCube(1.0)
+            case 2:
+                glut.glutSolidSphere(0.7, 20, 20)
+            case 3:
+                glut.glutSolidTeapot(0.6)
+            case 4:
+                glut.glutSolidTetrahedron()
         gl.glPopMatrix()
 
 
@@ -33,15 +45,14 @@ class Scene:
         self.translation_y = 0.0
         self.scale = 0.2
         self.combinations = random.sample(range(10, 50), 31)
-        # self.cubes = [
-        #     Polygons(
-        #         *coordinates,
-        #         color=colors.randomly(),
-        #         combination=combination,
-        #     )
-        #     for coordinates in scene_coordinates
-        #     for combination in self.combinations
-        # ]
+        self.polygons = [
+            Polygons(
+                *SCENE_COORDINATES[index],
+                color_id=int(str(self.combinations[index])[1]),
+                form=int(str(self.combinations[index])[0]),
+            )
+            for index in range(31)
+        ]
 
         glut.glutInit(sys.argv)
         glut.glutInitDisplayMode(glut.GLUT_SINGLE | glut.GLUT_RGB)  # type: ignore
@@ -54,12 +65,8 @@ class Scene:
         glut.glutKeyboardFunc(self.keyboard)
         glut.glutMainLoop()
 
-    def generate_polygons(self):
-        for 
-
-
     def display(self):
-        gl.glClearColor(*colors.BASE, 1.0)
+        gl.glClearColor(*BASE_COLOR, 1.0)
         gl.glClear(gl.GL_COLOR_BUFFER_BIT)
         gl.glLoadIdentity()
         glu.gluLookAt(0.0, 0.0, 5.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0)
@@ -68,8 +75,8 @@ class Scene:
         gl.glScalef(self.scale, self.scale, self.scale)
         gl.glTranslatef(self.translation_x, self.translation_y, 0.0)
 
-        for cube in self.cubes:
-            cube.display()
+        for polygon in self.polygons:
+            polygon.display()
 
         gl.glFlush()
 
