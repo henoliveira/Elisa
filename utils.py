@@ -1,6 +1,7 @@
 import random
 
 BASE_COLOR = (0.937, 0.945, 0.961)
+TEXT_COLOR = (0.298, 0.31, 0.412)
 
 COLORS = {
     "blue": (0.118, 0.400, 0.961),

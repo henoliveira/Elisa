@@ -1,10 +1,12 @@
 import random
 import sys
+from time import sleep
 
 import OpenGL.GL as gl
 import OpenGL.GLU as glu
 import OpenGL.GLUT as glut
-from utils import BASE_COLOR, COLORS, COLORS_LIST, SCENE_COORDINATES
+
+from utils import BASE_COLOR, COLORS_LIST, SCENE_COORDINATES, TEXT_COLOR
 
 
 class Polygons:
@@ -13,19 +15,31 @@ class Polygons:
         x: int,
         y: int,
         z: int,
-        color_id: int,
-        form: int,
+        id: int,
+        index: int,
     ):
         self.position = (x, y, z)
-        self.color_id = color_id
-        self.form = form
+        self.id = id
+        self.form_id = int(str(id)[0])
+        self.color_id = int(str(id)[1])
+        self.index = index
+        self.parent_index = (index - 1) // 2
+        self.children_indexes = []
+        if index < 15:
+            self.children_indexes = [index * 2 + 1, index * 2 + 2]
         gl.glShadeModel(gl.GL_FLAT)
 
-    def display(self):
+    def display(self, active: bool = False):
+        if active is False:
+            gl.glColor3f(*COLORS_LIST[self.color_id])
+        else:
+            gl.glColor3f(*TEXT_COLOR)
+            gl.glFlush()
+
         gl.glPushMatrix()
         gl.glTranslatef(*self.position)
-        gl.glColor3f(*COLORS_LIST[self.color_id])
-        match self.form:
+
+        match self.form_id:
             case 1:
                 glut.glutSolidCube(1.0)
             case 2:
@@ -34,6 +48,7 @@ class Polygons:
                 glut.glutSolidTeapot(0.6)
             case 4:
                 glut.glutSolidTetrahedron()
+
         gl.glPopMatrix()
 
 
@@ -48,8 +63,8 @@ class Scene:
         self.polygons = [
             Polygons(
                 *SCENE_COORDINATES[index],
-                color_id=int(str(self.combinations[index])[1]),
-                form=int(str(self.combinations[index])[0]),
+                id=self.combinations[index],
+                index=index,
             )
             for index in range(31)
         ]
@@ -63,7 +78,30 @@ class Scene:
         glut.glutReshapeFunc(self.reshape)
         glut.glutSpecialFunc(self.special)
         glut.glutKeyboardFunc(self.keyboard)
+
         glut.glutMainLoop()
+
+    def dfs(
+        self, graph: list[Polygons], start_node: Polygons, target: int, visited=None
+    ) -> bool:
+        start_node.display(True)
+        sleep(1)
+
+        if visited is None:
+            visited = set()
+
+        visited.add(start_node.index)
+
+        if start_node.id == target:
+            print(visited)
+            return True
+
+        for neighbor in start_node.children_indexes:
+            if neighbor not in visited:
+                if self.dfs(graph, graph[neighbor], target, visited):
+                    return True
+
+        return False
 
     def display(self):
         gl.glClearColor(*BASE_COLOR, 1.0)
@@ -77,6 +115,15 @@ class Scene:
 
         for polygon in self.polygons:
             polygon.display()
+            if polygon.parent_index < 0:
+                continue
+
+            gl.glColor3f(*TEXT_COLOR)
+            gl.glBegin(gl.GL_LINES)
+            gl.glVertex3f(*SCENE_COORDINATES[polygon.index])
+            gl.glVertex3f(*SCENE_COORDINATES[polygon.parent_index])
+
+            gl.glEnd()
 
         gl.glFlush()
 
@@ -112,6 +159,20 @@ class Scene:
             self.scale -= 0.1
         if key == b"]":
             self.scale += 0.1
+
+        if key == b"f":
+            print("First number is the form id and the second is the color id.\n")
+            print("Form id:\n1 = Cube, 2 = Sphere, 3 = Teapot, 4 = Tetrahedron")
+            print("\nColor id:")
+            print("0 = Blue, 1 = Green, 2 = Maroon, 3 = Mauve")
+            print("4 = Peach, 5 = Pink, 6 = Red, 7 = Rosewater")
+            print("8 = Sky, 9 = Yellow")
+
+            target_value = int(input("\nEnter the value to search: "))
+            if self.dfs(self.polygons, self.polygons[0], target_value):
+                print(f"Found {target_value} in the graph.")
+            else:
+                print(f"{target_value} was not found in the graph.")
 
         glut.glutPostRedisplay()
 
