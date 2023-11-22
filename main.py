@@ -10,6 +10,7 @@ import OpenGL.GLUT as glut
 from utils import BASE_COLOR, COLORS_LIST, SCENE_COORDINATES, TEXT_COLOR
 
 ANIMATION_RUNNING = True
+LIGHT_INTENSITY = 0.3  # Initial light intensity
 
 
 class Polygons:
@@ -50,7 +51,7 @@ class Polygons:
             case 3:
                 glut.glutSolidTeapot(0.6)
             case 4:
-                glut.glutSolidTetrahedron()
+                glut.glutSolidOctahedron()
 
         gl.glPopMatrix()
 
@@ -75,12 +76,32 @@ class Scene:
         glut.glutInit(sys.argv)
         glut.glutInitDisplayMode(glut.GLUT_SINGLE | glut.GLUT_RGB)  # type: ignore
         glut.glutInitWindowSize(800, 800)
-        glut.glutCreateWindow("Multiple Cubes")
+        glut.glutCreateWindow("Polygons")
 
         glut.glutDisplayFunc(self.display)
         glut.glutReshapeFunc(self.reshape)
         glut.glutSpecialFunc(self.special)
         glut.glutKeyboardFunc(self.keyboard)
+
+        # Enable lighting
+        gl.glEnable(gl.GL_LIGHTING)
+        gl.glEnable(gl.GL_LIGHT0)
+
+        gl.glLightfv(gl.GL_LIGHT0, gl.GL_POSITION, [0.0, 0.0, -100.0, 1.0])
+        gl.glLightfv(gl.GL_LIGHT0, gl.GL_POSITION, [10.0, 0.0, -100.0, 1.0])
+        gl.glLightfv(gl.GL_LIGHT0, gl.GL_POSITION, [-10.0, 0.0, -100.0, 1.0])
+        gl.glLightfv(gl.GL_LIGHT0, gl.GL_POSITION, [0.0, 10.0, -100.0, 1.0])
+        gl.glLightfv(gl.GL_LIGHT0, gl.GL_POSITION, [0.0, -10.0, -100.0, 1.0])
+
+        # Set the color of the light (diffuse and specular) to white
+        light_color = [1.0, 1.0, 1.0, 1.0]
+        gl.glLightfv(gl.GL_LIGHT0, gl.GL_DIFFUSE, light_color)
+        gl.glLightfv(gl.GL_LIGHT0, gl.GL_SPECULAR, light_color)
+
+        # Enable color tracking, so glColor* calls affect the current color of the material
+        gl.glEnable(gl.GL_COLOR_MATERIAL)
+        # Set the ambient and diffuse material properties
+        gl.glColorMaterial(gl.GL_FRONT, gl.GL_AMBIENT_AND_DIFFUSE)
 
         glut.glutMainLoop()
 
@@ -116,13 +137,21 @@ class Scene:
 
     def display(self):
         gl.glClearColor(*BASE_COLOR, 1.0)
-        gl.glClear(gl.GL_COLOR_BUFFER_BIT)
+        gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)  # type: ignore
         gl.glLoadIdentity()
         glu.gluLookAt(0.0, 0.0, 5.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0)
         gl.glRotatef(self.rotate_x, 1.0, 0.0, 0.0)
         gl.glRotatef(self.rotate_y, 0.0, 1.0, 0.0)
         gl.glScalef(self.scale, self.scale, self.scale)
         gl.glTranslatef(self.translation_x, self.translation_y, 0.0)
+
+        # Adjust light intensity
+        gl.glColor3f(LIGHT_INTENSITY, LIGHT_INTENSITY, LIGHT_INTENSITY)
+        gl.glLightfv(
+            gl.GL_LIGHT0,
+            gl.GL_DIFFUSE,
+            [LIGHT_INTENSITY, LIGHT_INTENSITY, LIGHT_INTENSITY, 1.0],
+        )
 
         for polygon in self.polygons:
             polygon.display()
@@ -157,6 +186,7 @@ class Scene:
         glut.glutPostRedisplay()
 
     def keyboard(self, key, x, y):
+        global LIGHT_INTENSITY
         if key == b"d":
             self.translation_x -= 0.1
         if key == b"a":
@@ -171,9 +201,18 @@ class Scene:
         if key == b"]":
             self.scale += 0.1
 
+        if key == b"l":
+            LIGHT_INTENSITY += 0.1
+            if LIGHT_INTENSITY > 1.0:
+                LIGHT_INTENSITY = 0.0
+        elif key == b"k":
+            LIGHT_INTENSITY -= 0.1
+            if LIGHT_INTENSITY < 0.0:
+                LIGHT_INTENSITY = 1.0
+
         if key == b"f":
             print("First number is the form id and the second is the color id.\n")
-            print("Form id:\n1 = Cube, 2 = Sphere, 3 = Teapot, 4 = Tetrahedron")
+            print("Form id:\n1 = Cube, 2 = Sphere, 3 = Teapot, 4 = Octahedron")
             print("\nColor id:")
             print("0 = Blue, 1 = Green, 2 = Maroon, 3 = Mauve")
             print("4 = Peach, 5 = Pink, 6 = Red, 7 = Rosewater")
