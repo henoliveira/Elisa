@@ -6,7 +6,16 @@ import OpenGL.GL as gl
 import OpenGL.GLU as glu
 import OpenGL.GLUT as glut
 
-from utils import BASE_COLOR, COLORS_LIST, SCENE_COORDINATES, TEXT_COLOR, SCENE_COORDINATES_3D
+from utils import (
+    BASE_COLOR,
+    COLORS_LIST,
+    SCENE_COORDINATES,
+    SCENE_COORDINATES_3D,
+    TEXT_COLOR,
+)
+
+LIGHT_INTENSITY = 0.3  # Initial light intensity
+
 
 class Polygons:
     def __init__(
@@ -46,7 +55,7 @@ class Polygons:
             case 3:
                 glut.glutSolidTeapot(0.6)
             case 4:
-                glut.glutSolidTetrahedron()
+                glut.glutSolidOctahedron()
 
         gl.glPopMatrix()
 
@@ -61,7 +70,9 @@ class Scene:
         self.selected_scene = 0
         self.combinations = random.sample(range(10, 50), 31)
 
-        selected_scene_coordinates = SCENE_COORDINATES if self.selected_scene == 0 else SCENE_COORDINATES_3D
+        selected_scene_coordinates = (
+            SCENE_COORDINATES if self.selected_scene == 0 else SCENE_COORDINATES_3D
+        )
 
         self.polygons = [
             Polygons(
@@ -75,12 +86,28 @@ class Scene:
         glut.glutInit(sys.argv)
         glut.glutInitDisplayMode(glut.GLUT_SINGLE | glut.GLUT_RGB)  # type: ignore
         glut.glutInitWindowSize(800, 800)
-        glut.glutCreateWindow("Multiple Cubes")
+        glut.glutCreateWindow("Polygons")
 
         glut.glutDisplayFunc(self.display)
         glut.glutReshapeFunc(self.reshape)
         glut.glutSpecialFunc(self.special)
         glut.glutKeyboardFunc(self.keyboard)
+
+        gl.glEnable(gl.GL_LIGHTING)
+        gl.glEnable(gl.GL_LIGHT0)
+
+        gl.glLightfv(gl.GL_LIGHT0, gl.GL_POSITION, [0.0, 0.0, -100.0, 1.0])
+        gl.glLightfv(gl.GL_LIGHT0, gl.GL_POSITION, [10.0, 0.0, -100.0, 1.0])
+        gl.glLightfv(gl.GL_LIGHT0, gl.GL_POSITION, [-10.0, 0.0, -100.0, 1.0])
+        gl.glLightfv(gl.GL_LIGHT0, gl.GL_POSITION, [0.0, 10.0, -100.0, 1.0])
+        gl.glLightfv(gl.GL_LIGHT0, gl.GL_POSITION, [0.0, -10.0, -100.0, 1.0])
+
+        light_color = [1.0, 1.0, 1.0, 1.0]
+        gl.glLightfv(gl.GL_LIGHT0, gl.GL_DIFFUSE, light_color)
+        gl.glLightfv(gl.GL_LIGHT0, gl.GL_SPECULAR, light_color)
+
+        gl.glEnable(gl.GL_COLOR_MATERIAL)
+        gl.glColorMaterial(gl.GL_FRONT, gl.GL_AMBIENT_AND_DIFFUSE)
 
         self.polygons_dict = {
             1: "Cube",
@@ -108,9 +135,7 @@ class Scene:
         self.create_menu()
 
         glut.glutPostRedisplay()
- 
         glut.glutMainLoop()
-
 
     def create_menu(self):
         form_menu = glut.glutCreateMenu(self.form_menu_handler)
@@ -137,11 +162,11 @@ class Scene:
         glut.glutAddMenuEntry("Iniciar DFS", main_menu)
 
         glut.glutAttachMenu(glut.GLUT_RIGHT_BUTTON)
-    
+
     def form_menu_handler(self, value):
         self.selected_polygon = value
         return value
-    
+
     def color_menu_handler(self, value):
         self.selected_color = value
         return value
@@ -149,20 +174,22 @@ class Scene:
     def menu_handler(self, main_menu):
         glut.glutPostRedisplay()
         self.start_dfs()
-    
+
     def start_dfs(self):
         if self.selected_polygon == None or self.selected_color == None:
             print("Selecione um polígono e uma cor")
             return
 
         if self.dfs(self.polygons, self.polygons[0]):
-            print(f"Encontrou {self.polygons_dict[self.selected_polygon]} {self.colors_dict[self.selected_color]}")
+            print(
+                f"Encontrou {self.polygons_dict[self.selected_polygon]} {self.colors_dict[self.selected_color]}"
+            )
         else:
-            print(f"Não encontrou {self.polygons_dict[self.selected_polygon]} {self.colors_dict[self.selected_color]}")
-        
-    def dfs(
-        self, graph: list[Polygons], start_node: Polygons, visited=None
-    ) -> bool:
+            print(
+                f"Não encontrou {self.polygons_dict[self.selected_polygon]} {self.colors_dict[self.selected_color]}"
+            )
+
+    def dfs(self, graph: list[Polygons], start_node: Polygons, visited=None) -> bool:
         start_node.display(True)
         sleep(1)
         target = str(self.selected_polygon) + str(self.selected_color)
@@ -172,14 +199,15 @@ class Scene:
 
         visited.add(start_node.index)
 
-        if str(start_node.id) == target:
+        if start_node.id == target:
             print(visited)
-            return True
-
-        for neighbor in start_node.children_indexes:
-            if neighbor not in visited:
-                if self.dfs(graph, graph[neighbor], visited):
-                    return True
+            active = True
+            for _ in range(10):
+                start_node.display(active)
+                sleep(0.5)
+                active = not active
+                glut.glutSwapBuffers()
+                glut.glutPostRedisplay()
 
         return False
 
@@ -193,7 +221,16 @@ class Scene:
         gl.glScalef(self.scale, self.scale, self.scale)
         gl.glTranslatef(self.translation_x, self.translation_y, 0.0)
 
-        selected_scene_coordinates = SCENE_COORDINATES if self.selected_scene == 0 else SCENE_COORDINATES_3D
+        selected_scene_coordinates = (
+            SCENE_COORDINATES if self.selected_scene == 0 else SCENE_COORDINATES_3D
+        )
+
+        gl.glColor3f(LIGHT_INTENSITY, LIGHT_INTENSITY, LIGHT_INTENSITY)
+        gl.glLightfv(
+            gl.GL_LIGHT0,
+            gl.GL_DIFFUSE,
+            [LIGHT_INTENSITY, LIGHT_INTENSITY, LIGHT_INTENSITY, 1.0],
+        )
 
         for polygon in self.polygons:
             polygon.display()
@@ -228,6 +265,7 @@ class Scene:
         glut.glutPostRedisplay()
 
     def keyboard(self, key, x, y):
+        global LIGHT_INTENSITY
         if key == b"d":
             self.translation_x -= 0.1
         if key == b"a":
@@ -244,9 +282,17 @@ class Scene:
 
         if key == b"z":
             self.selected_scene = 1
-
         if key == b"x":
             self.selected_scene = 0
+
+        if key == b"l":
+            LIGHT_INTENSITY += 0.1
+            if LIGHT_INTENSITY > 1.0:
+                LIGHT_INTENSITY = 0.0
+        if key == b"k":
+            LIGHT_INTENSITY -= 0.1
+            if LIGHT_INTENSITY < 0.0:
+                LIGHT_INTENSITY = 1.0
 
         glut.glutPostRedisplay()
 
