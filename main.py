@@ -1,5 +1,6 @@
 import random
 import sys
+import threading
 from time import sleep
 
 import OpenGL.GL as gl
@@ -7,6 +8,8 @@ import OpenGL.GLU as glu
 import OpenGL.GLUT as glut
 
 from utils import BASE_COLOR, COLORS_LIST, SCENE_COORDINATES, TEXT_COLOR
+
+ANIMATION_RUNNING = True
 
 
 class Polygons:
@@ -94,6 +97,14 @@ class Scene:
 
         if start_node.id == target:
             print(visited)
+            active = True
+            while ANIMATION_RUNNING:  # Check stop_animation
+                start_node.display(active)
+                sleep(0.5)
+                active = not active
+                glut.glutSwapBuffers()
+                glut.glutPostRedisplay()
+
             return True
 
         for neighbor in start_node.children_indexes:
