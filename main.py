@@ -171,7 +171,7 @@ class Scene:
         self.selected_color = value
         return value
 
-    def menu_handler(self, main_menu):
+    def menu_handler(self, _):
         glut.glutPostRedisplay()
         self.start_dfs()
 
@@ -192,7 +192,7 @@ class Scene:
     def dfs(self, graph: list[Polygons], start_node: Polygons, visited=None) -> bool:
         start_node.display(True)
         sleep(1)
-        target = str(self.selected_polygon) + str(self.selected_color)
+        target = int(str(self.selected_polygon) + str(self.selected_color))
 
         if visited is None:
             visited = set()
@@ -202,12 +202,18 @@ class Scene:
         if start_node.id == target:
             print(visited)
             active = True
-            for _ in range(10):
+            for _ in range(20):
                 start_node.display(active)
                 sleep(0.5)
                 active = not active
                 glut.glutSwapBuffers()
                 glut.glutPostRedisplay()
+            return True
+
+        for neighbor in start_node.children_indexes:
+            if neighbor not in visited:
+                if self.dfs(graph, graph[neighbor], visited):
+                    return True
 
         return False
 
