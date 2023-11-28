@@ -270,6 +270,22 @@ class Scene:
             self.rotate_x -= 5
         glut.glutPostRedisplay()
 
+    def reDrawPolygons(self):
+        self.combinations = random.sample(range(10, 50), 31)
+
+        selected_scene_coordinates = (
+            SCENE_COORDINATES if self.selected_scene == 0 else SCENE_COORDINATES_3D
+        )
+
+        self.polygons = [
+            Polygons(
+                *selected_scene_coordinates[index],
+                id=self.combinations[index],
+                index=index,
+            )
+            for index in range(31)
+        ]
+
     def keyboard(self, key, x, y):
         global LIGHT_INTENSITY
         if key == b"d":
@@ -288,8 +304,11 @@ class Scene:
 
         if key == b"z":
             self.selected_scene = 1
+            self.reDrawPolygons()
+            
         if key == b"x":
             self.selected_scene = 0
+            self.reDrawPolygons()
 
         if key == b"l":
             LIGHT_INTENSITY += 0.1
