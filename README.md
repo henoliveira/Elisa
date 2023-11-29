@@ -70,6 +70,10 @@ $ make
 
 $ ./window
 
+Para instalar as dependencias do código em python (certifique-se que está no diretório do arquivo):
+
+$ pip3 install -r requirements.txt
+
 Para executar o programa em python basta executar o comando window.py (certifique-se que o arquivo é executável, tem permissão de execução):
 
 $ ./window.py
